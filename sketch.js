@@ -273,13 +273,17 @@ function keyPressed()
         isRight = true;
     }
     
-    if(key == 'w' || key == 'W' || keyCode == 32)
+    if(key == 'w' || key == 'W' || keyCode === 87)
     {  
         if(!isFalling && !isPlummeting && lives > 0)
         {
             gameChar_y -= 100;
             jumpSound.play();
         }
+    }
+	
+    if(key == ' ' || keyCode == 32) {
+    	startGame();
     }
 }
 
