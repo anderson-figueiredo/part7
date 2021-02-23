@@ -128,6 +128,12 @@ function draw()
             {
                 lives -= 1;
                 ghostSound.play();
+                /*Adicionei a música no contato com o fantasma para tocar quando zerar a vida*/
+                if(!lives) {
+                    ghostSound.stop;
+                    gameSong.stop()
+                    gameOver.isPlaying() || gameOver.play()
+               }
                 startGame();
                 break;
             }
@@ -1066,8 +1072,8 @@ function Enemy(x, y, range)
         }
         else
         {
-//            ellipse(this.currentX + 1, this.y - 12, 3, 3);
-//            ellipse(this.currentX + 10, this.y - 12, 3, 3);
+            //ellipse(this.currentX + 1, this.y - 12, 3, 3);
+            //ellipse(this.currentX + 10, this.y - 12, 3, 3);
 
             ellipse(this.currentX + 2, this.y - 12, 3, 3);
             ellipse(this.currentX + 11, this.y - 12, 3, 3); 
