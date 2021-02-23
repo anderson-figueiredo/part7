@@ -273,6 +273,7 @@ function keyPressed()
         isRight = true;
     }
     
+    /*mudei o código do w*/ 
     if(key == 'w' || key == 'W' || keyCode === 87)
     {  
         if(!isFalling && !isPlummeting && lives > 0)
@@ -282,8 +283,11 @@ function keyPressed()
         }
     }
 	
+    /*adicionei o código do espaço com validação das vidas restantes*/ 
     if(key == ' ' || keyCode == 32) {
-    	startGame();
+        if(!lives) {
+            setup();
+        }
     }
 }
 
