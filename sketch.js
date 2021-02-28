@@ -5,6 +5,7 @@ var gameChar_y;
 var floorPos_y;
 var scrollPos;
 var gameChar_world_x;
+var mode;
 
 var isLeft;
 var isRight;
@@ -19,6 +20,8 @@ var collectables;
 var platforms;
 var enemies;
 var flowers;
+var checkDeath = 0;
+var startInstructions = false;
 
 var game_score;
 var flagpole;
@@ -62,25 +65,57 @@ function preload()
     gameFont = loadFont('assets/DotGothic16/DotGothic16-Regular.ttf');
 }
 
-
 function setup()
 {
+    mode = 0;
+    
 	createCanvas(1024, 576);
 	floorPos_y = height * 3/4;
-    
+    checkDeath = 0;
+
     // Background music
     gameSong.loop();
-
+    
     // Initialise lives.
     lives = 3;    
     startGame();
     
 }
 
-
 function draw()
 {
+    //clear();
 
+    if(mode == 0)
+    {        
+        // Game score.
+        textFont(gameFont);
+        textSize(20);
+        textAlign(LEFT);
+        fill(255);
+        stroke(0);
+        strokeWeight(1);
+        text("Score: " + game_score + "/15", 35, 30);
+        noStroke();
+
+          fill(255);
+            stroke(0);
+            strokeWeight(2);
+            rect(width/4, height/3, width/2, height/4);
+            noStroke();
+
+            textSize(24);
+            textAlign(CENTER, CENTER);
+            fill(0);
+            textSize(32);
+            text("Start complete", width/2, height/2 - 50);
+            textSize(24);
+            text("Press Space to play again", width/2, height/2 - 10); 
+
+    }
+
+    if(mode == 1)
+    {
     background(100, 155, 255); // fill the sky blue
 
 	noStroke();
@@ -92,8 +127,6 @@ function draw()
     fill(0, 155, 0);  // draw some green ground
     rect(0, floorPos_y, width, height/30); 
 
-
-    
     push();
     translate(scrollPos, 0);
        
@@ -145,15 +178,8 @@ function draw()
         {
             if(lives > 0)
             {
-                lives -= 1;
                 ghostSound.play();
-                /*Adicionei a música no contato com o fantasma para tocar quando zerar a vida*/
-                    if(!lives) 
-                    {
-                        gameSong.stop();
-                        gameOver.isPlaying() || gameOver.play();
-                    }
-                startGame();
+                checkPlayerDie(isContact);
                 break;
             }
         }
@@ -163,14 +189,11 @@ function draw()
     // Render flagpole
     renderFlagpole();
 
-    // Draw demon
+    // Draw death angel
     drawDeathAngel();
 
 
     pop();
-    
-    // Check if player went down the cliff.
-    checkPlayerDie();
     
     // Lives score.
     if(lives > 0)
@@ -194,22 +217,9 @@ function draw()
     text("Score: " + game_score + "/15", 35, 30);
     noStroke();
     
-    // Game over message.
-    if(lives < 1)
-    {
-        stroke(0);
-        strokeWeight(2);
-        rect(width/4, height/3, width/2, height/4);
-        noStroke();
+     checkPlayerDie();
         
-        textAlign(CENTER, CENTER);
-        fill(0);
-        textSize(32);
-        text("Game over", width/2, height/2 - 50);
-        textSize(24);
-        text("Press space to play again", width/2, height/2 - 10);
-    }
-     
+        
     // Level complete message.
     if(flagpole.isReached)
     {
@@ -291,7 +301,94 @@ function draw()
     
 	// Update real position of gameChar for collision detection.
 	gameChar_world_x = gameChar_x - scrollPos;
+    } // end of mode 1 
 }
+
+
+function scenery()
+{
+
+    background(100, 155, 255); // fill the sky blue    
+	
+    noStroke();
+   	
+    fill(225, 169, 95); // draw some earth ground
+    rect(0, floorPos_y, width, height/4); 
+    fill(255, 155, 0); // draw some yellow ish ground
+    rect(0, floorPos_y, width, height/20);
+    fill(0, 155, 0);  // draw some green ground
+    rect(0, floorPos_y, width, height/30); 
+
+    push();
+    translate(scrollPos, 0);
+       
+    // Draw Clouds
+    clouds.drawAndUpdateClouds();
+    
+	// Draw mountains.
+    drawMountains();
+	
+    // Draw trees.
+    drawTrees();
+
+	// Draw canyons.
+    for(var i = 0; i < canyons.length; i++)
+        {
+            drawCanyon(canyons[i]);
+            checkCanyon(canyons[i]);
+        }
+	
+    // Draw collectable items.
+    for(var i = 0; i < collectables.length; i++)
+        {
+            if(collectables[i].isFound == false)
+            {
+                drawCollectable(collectables[i]);
+                checkCollectable(collectables[i]);
+            }
+        }
+    
+    // Draw Platfomrs
+    for(var i = 0; i < platforms.length; i++)
+    {
+        platforms[i].draw();
+    }
+    
+    // Draw flowers
+    for(var i = 0; i < flowers.length; i++)
+    {
+        flowers[i].draw();
+    }
+    
+    // Draw enemies
+    for(var i = 0; i < enemies.length; i++)
+    {
+        enemies[i].draw();
+        
+        var isContact = enemies[i].checkContact(gameChar_world_x, gameChar_y);
+        if(isContact || gameChar_world_x < -450)
+        {
+            if(lives > 0)
+            {
+                ghostSound.play();
+                checkPlayerDie(isContact);
+                break;
+            }
+        }
+    }
+
+
+    // Render flagpole
+    renderFlagpole();
+
+    // Draw death angel
+    drawDeathAngel();
+
+
+    pop();
+
+}
+
 
 
 // ---------------------
@@ -319,10 +416,15 @@ function keyPressed()
         }
     }
     
+    if(keyCode == 32) 
+    {
+        mode=1;
+    }
+    
     //restart the game pressing space
     if(!lives || flagpole.isReached)
     {
-        if(keyCode == 32) 
+        if(keyCode == 13) 
         {
             setup();
         }
@@ -689,7 +791,6 @@ function drawTrees()
 function drawDeathAngel()
 {      
 
-
         xPos = -300;
         yPos = floorPos_y + 190
         
@@ -824,11 +925,17 @@ function drawCanyon(t_canyon)
 
 function checkCanyon(t_canyon)
 {
-    if((gameChar_world_x > t_canyon.x_pos) && (gameChar_world_x < t_canyon.x_pos+t_canyon.width) && (gameChar_y >= floorPos_y))
-    {  
-        isPlummeting = true;  
-        gameChar_y += 2;
-        fallingSound.isPlaying() || fallingSound.play();
+    
+    if(lives > 0)
+    {
+        if((gameChar_world_x > t_canyon.x_pos) && 
+           (gameChar_world_x < t_canyon.x_pos+t_canyon.width) && 
+           (gameChar_y >= floorPos_y))
+        {  
+            isPlummeting = true;  
+            gameChar_y += 2;
+            fallingSound.isPlaying() || fallingSound.play();
+        }
     }
     
     if (isPlummeting || flagpole.isReached || !lives)
@@ -836,7 +943,6 @@ function checkCanyon(t_canyon)
         isLeft = false;
         isRight = false;
     }
-    
 }
 
 // ----------------------------------
@@ -968,25 +1074,44 @@ function checkFlagpole()
 
 
 
-function checkPlayerDie()
-{
-    if(gameChar_y > height )    
+function checkPlayerDie(isContact)
+{   
+    if(lives > 0)
     {
-        lives -= 1;
-        
-        if(lives > 0)
+        if(gameChar_y > height || isContact || gameChar_world_x < -450)    
         {
-            startGame();
-            fallingSound.stop();
-        }
-        
-        if(!lives)
-        {   
-            gameSong.stop()
-            gameOver.isPlaying() || gameOver.play()
-            
+            lives -= 1;
+
+            if(lives > 0)
+            {
+                startGame();
+            }
         }
     }
+    else
+    {  
+        
+        // Game over message.
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        rect(width/4, height/3, width/2, height/4);
+        noStroke();
+
+        textAlign(CENTER, CENTER);
+        textSize(32);
+        fill(0);
+        text("Game over", width/2, height/2 - 50);
+        textSize(24);
+        text("Press space to play again", width/2, height/2 - 10);
+        
+        if(checkDeath ==  0 && !lives)
+        {
+            checkDeath++;
+            gameSong.stop();
+            gameOver.isPlaying() || gameOver.play();
+        }
+    }   
 }
 
 
@@ -1096,7 +1221,7 @@ function startGame()
   
     //Initialise Clouds
     clouds = new CloudRespawn();
-    clouds.cloudsOnTheSky(15);
+    clouds.cloudsOnTheSky(18);
     
     //Initialise flagpole.
     flagpole = {isReached : false, x_pos: 3100, flagWidth: 80, flagHeight:48}
